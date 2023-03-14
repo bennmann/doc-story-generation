@@ -8,6 +8,8 @@ import string
 import logging
 from typing import Dict, Optional, Union, Sequence
 import requests
+import accelerate
+import bitsandbytes
 
 import roman
 import Levenshtein
@@ -15,10 +17,10 @@ import torch
 from torch import Tensor
 import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, T5TokenizerFast, T5ForConditionalGeneration
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, T5TokenizerFast, T5ForConditionalGeneration, AutoModelForCausalLM
 import openai
 from scipy.special import softmax
-import numpy as np
+import numpy as npg
 from nltk.corpus import stopwords
 from Levenshtein import distance as levenshtein_distance
 import signal
@@ -43,18 +45,19 @@ def time_limit(seconds):
 sentence_encoder = None
 dpr_query_encoder = None
 dpr_context_encoder = None
-entailment_model = None
-entailment_tokenizer = None
-ner_model = None
-qa_model = None
-qa_tokenizer = None
-coreference_model = None
-gpt_tokenizer = None
+entailment_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", torch_dtype=float16, load_in_8bit=True, device_map="auto") #None #default is None
+entailment_tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
+ner_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", torch_dtype=float16, load_in_8bit=True, device_map="auto") #None #default is None
+qa_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", torch_dtype=float16, load_in_8bit=True, device_map="auto") #None #default is None
+qa_tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
+coreference_model = AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", torch_dtype=float16, load_in_8bit=True, device_map="auto") #None #default is None
+gpt_tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
 outline_order_controller = None
-
+tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b")
 
 def add_general_args(parser):
-    parser.add_argument('--batch-size', type=int, default=128, help='batch size')
+    #parser.add_argument('--batch-size', type=int, default=128, help='batch size') #default
+    parser.add_argument('--batch-size', type=int, default=1, help='batch size')
     parser.add_argument('--seed', type=int, default=12345, help='seed')
     parser.add_argument('--debug', action='store_true', help='debug mode')
     parser.add_argument('--quiet', action='store_true', help='quiet mode')
@@ -266,7 +269,7 @@ def score_qa(question, context, do_sample=False, num_beams=1, device=('cuda' if 
     input_string = input_string.lower() # unifiedqa says to do this
     input_string = re.sub("'(.*)'", r"\1", input_string) # unifiedqa says to do this
     input_ids = qa_tokenizer.encode(input_string, return_tensors="pt").to(device)
-    res = qa_model.generate(input_ids, do_sample=do_sample, num_beams=1 if do_sample else num_beams, num_return_sequences=num_beams, output_scores=True, early_stopping=True, return_dict_in_generate=True)
+    res = qa_model.generate(input_ids, do_sample=do_sample, num_beams=1 if do_sample else num_beams, num_return_sequences=num_beams, output_scores=True, early_stopping=True, return_dict_in_generate=True, load_in_8bit=True, device_map="auto")
     return qa_tokenizer.batch_decode(res.sequences, skip_special_tokens=True), F.softmax(res.sequences_scores * res.sequences.shape[-1], dim=-1).cpu().tolist() if hasattr(res, 'sequences_scores') else [1./num_beams for _ in range(num_beams)]
 
 
