@@ -1,5 +1,10 @@
 # DOC: Improving Long Story Coherence With Detailed Outline Control
 
+EDIT: The purpose of this branch of Dr Yangs repo is to change the util.py in the story_generations/common folder to load a local, on premise model in hopes of avoiding an alpa server and expand compatibility into the future for SOTA models that can be run on Colab or regular ol consumer GPU and CPU.
+Work in Progress
+/end EDIT
+--------------------------
+
 This repo contains code for DOC: Improving Long Story Coherence With Detailed Outline Control (https://arxiv.org/abs/2212.10077) by Kevin Yang, Dan Klein, Nanyun Peng, and Yuandong Tian. In this codebase we provide instructions for automatically generating longer stories (avg 3500+ words in our paper experiments). DOC's stories are judged by human annotators as substantially more coherent, relevant, and interesting compared to those written by our previous system, Re3 (https://github.com/yangkevin2/emnlp22-re3-story-generation). 
 
 ## Installation / Data
