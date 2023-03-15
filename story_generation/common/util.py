@@ -45,12 +45,12 @@ def time_limit(seconds):
 sentence_encoder = None
 dpr_query_encoder = None
 dpr_context_encoder = None
-entailment_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", torch_dtype=float16, load_in_8bit=True, device_map="auto") #None #default is None
+entailment_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
 entailment_tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
-ner_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", torch_dtype=float16, load_in_8bit=True, device_map="auto") #None #default is None
-qa_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", torch_dtype=float16, load_in_8bit=True, device_map="auto") #None #default is None
+ner_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
+qa_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
 qa_tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
-coreference_model = AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", torch_dtype=float16, load_in_8bit=True, device_map="auto") #None #default is None
+coreference_model = AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
 gpt_tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
 outline_order_controller = None
 tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b")
