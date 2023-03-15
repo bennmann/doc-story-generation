@@ -1,6 +1,6 @@
 # DOC: Improving Long Story Coherence With Detailed Outline Control
 
-EDIT: The purpose of this branch of Dr Yangs repo is to change the util.py in the story_generations/common folder to load a local, on premise model in hopes of avoiding an alpa server and expand compatibility into the future for SOTA models that can be run on Colab or regular ol consumer GPU and CPU.
+EDIT: The purpose of this branch of Dr Yang's repo is to change the util.py in the story_generations/common folder to load a local, on premise model in hopes of avoiding an alpa server and expand compatibility into the future for SOTA models that can be run on Colab or regular ol consumer GPU and CPU.
 Work in Progress
 /end EDIT
 --------------------------
