@@ -20,7 +20,7 @@ from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, T5TokenizerFast, T5ForConditionalGeneration, AutoModelForCausalLM
 import openai
 from scipy.special import softmax
-import numpy as npg
+import numpy as np
 from nltk.corpus import stopwords
 from Levenshtein import distance as levenshtein_distance
 import signal
