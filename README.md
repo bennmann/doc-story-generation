@@ -85,12 +85,12 @@ To do this, set `--extension-method gpt3` in the main story command below.
 
 It's not too expensive as far as the GPT3 API is concerned; you'll probably spend less than a dollar over the course of the story. 
 
+#### 4. RWKV RNN LLM 14B model locally, like on bare metal
+--rwkv_model flag - work in progress
+
 ### Main Story Generation Command
 
 After setting up your OPT-175B (or other) server, run the following to draft the story using the same settings as in our main paper experiments, making sure to append the extra Alpa-related (or other) arguments described above.
-
-#### 4. RWKV RNN LLM 14B model locally, like on bare metal
---rwkv_model flag - work in progress
 
 ```
 CUDA_VISIBLE_DEVICES=0 python -u scripts/main.py {{{ALPA_ARGS}}} --controller longformer_classifier longformer_classifier fudge_controller --loader alignment coherence fine_coherence --controller-load-dir doc_data/ckpt/relevance_reranker doc_data/ckpt/coherence_reranker doc_data/ckpt/detailed_controller --controller-model-string allenai/longformer-base-4096 allenai/longformer-base-4096 facebook/opt-350m --load-outline-file output/plan.pkl --no-editor --include-future-context --control-strength 1 1 0 --control-strength-substep-increment 3 --save-complete-file output/story.pkl --log-file output/story.log
