@@ -5,7 +5,7 @@ from story_generation.common.summarizer.models.rwkv_summarizer import RWKVSummar
 SUMMARIZER_CHOICES=['gpt3_summarizer', 'opt_summarizer', 'rwkv_summarizer']
 
 def add_summarizer_args(parser):
-    parser.add_argument('--summarizer', type=str, default='gpt3_summarizer', choices=SUMMARIZER_CHOICES, help='model architecture')
+    parser.add_argument('--summarizer', type=str, default='rwkv_summarizer', choices=SUMMARIZER_CHOICES, help='model architecture')
     parser.add_argument('--summarizer-save-dir', type=str, default=None, help='directory to save summarizer')
     parser.add_argument('--summarizer-load-dir', type=str, default=None, help='directory to load summarizer')
     parser.add_argument('--summarizer-temperature', type=float, default=0.8, help='temperature for summarizer')
