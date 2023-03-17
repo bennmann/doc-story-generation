@@ -1,7 +1,8 @@
 from story_generation.common.summarizer.models.gpt3_summarizer import GPT3Summarizer
 from story_generation.common.summarizer.models.opt_summarizer import OPTSummarizer
+from story_generation.common.summarizer.models.rwkv_summarizer import RWKVSummarizer
 
-SUMMARIZER_CHOICES=['gpt3_summarizer', 'opt_summarizer']
+SUMMARIZER_CHOICES=['gpt3_summarizer', 'opt_summarizer', 'rwkv_summarizer']
 
 def add_summarizer_args(parser):
     parser.add_argument('--summarizer', type=str, default='gpt3_summarizer', choices=SUMMARIZER_CHOICES, help='model architecture')
@@ -21,6 +22,7 @@ def add_summarizer_args(parser):
     parser.add_argument('--alpa-url', type=str, default=None, help='url for alpa API')
     parser.add_argument('--alpa-port', type=str, default=None, help='port for alpa API, if alpa-url is a filename to read server location from. convenient for slurm')
     parser.add_argument('--alpa-key', type=str, default='', help='key for alpa API, if using the public API')
+    parser.add_argument('--rwkv_model', type=str, default='rwkv_summarizer', help='On Premise/local model architecture based on RNN language model (search online for RWKV)'
     return parser
 
 def load_summarizer(args):
@@ -28,6 +30,8 @@ def load_summarizer(args):
         summarizer = GPT3Summarizer(args)
     elif args.summarizer == 'opt_summarizer':
         summarizer = OPTSummarizer(args)
+    elif args.summarizer == 'rwkv_summarizer':
+        summarizer = RWKVSummarizer(args)
     else:
         raise NotImplementedError
     return summarizer
