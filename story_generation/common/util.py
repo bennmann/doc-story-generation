@@ -26,6 +26,7 @@ from Levenshtein import distance as levenshtein_distance
 import signal
 from flair.data import Sentence
 from flair.models import SequenceTagger
+from rwkvstic.load import RWKV
 
 from story_generation.common.data.split_paragraphs import *
 
@@ -955,7 +956,68 @@ class AlpaOPTClient(object):
                 f'RuntimeError("{result["message"]}")')
         else:
             return result
+#major changes below
+class rwkvLocalClient(object):
+
+    def __init__(self, rwkv_model=rwkv_model#self,
+                 #url: Optional[str] = None,
+                 #api_key: Optional[str] = None,
+                ) 
+
+        self.rwkv_model = RWKV("/media/ubuntu/Patience/BLOOMAI_UBUNTU/RWKV-4-Pile-14B-20230313-ctx8192-test1050.pth", strategy="cuda fp16i8" #and many others documented in ChatRWKV github)
 
 
+    def completions(
+        self,
+        prompt_context: Union[str, Sequence[str], Sequence[int], Sequence[Sequence[int]]],
+        min_tokens: int = 0,
+        max_tokens: int = 32,
+        top_p: float = 0.8,
+        temperature: float = 1.0,
+        echo: bool = True,
+        model: Optional[str] = None,
+    ) -> Dict:
+        """
+        Generation API.
+        Parameters match those of the https://github.com/BlinkDL/ChatRWKV 
+        Args:
+          prompt_context: a list of tokenized inputs.
+          min_tokens: The minimum number of tokens to generate.
+          max_tokens: The maximum number of tokens to generate.
+          temperature: What sampling temperature to use.
+          top_p: The nucleus sampling probability.
+          echo: if true, returned text/tokens/scores includes the prompt.
+        """
+        result = rwkv_model.loadContext(ctx="\n\n", newctx=prompt_context
+                      #pipeline = PIPELINE(model, f"{current_path}/20B_tokenizer.json") # not sure if necessary
+                       char = rwkv_model.forward(["output"]
+                       print(char, end='', flush=True)
+                       #model.loadContext(newctx=char) #not sure on this one yet
+                       )  
+    def logprobs(
+        self,
+        prompt_context: Union[str, Sequence[str], Sequence[int], Sequence[Sequence[int]]],
+        top_p: float = 0.8,
+        top_k: int = 100,
+        cache_id: Optional = None,
+        model: Optional[str] = None) -> Dict:
+        """Return the log probability of the next top-k tokens"""
+        pload = {
+            "model": model or self.rwkv_model,
+            "prompt": prompt_context,
+            "top_p": top_p,
+            "top_k": top_k,
+            #"api_key": self.api_key
+        }
+        if cache_id:
+            pload["cache_id"] = cache_id
+        result = rwkv_model.loadContext(ctx="\n\n", newctx=prompt_context
+                       #pipeline = PIPELINE(model, f"{current_path}/20B_tokenizer.json") # not sure if necessary
+                       char = rwkv_model.forward(["output"]
+                       print(char, end='', flush=True)
+                       #model.loadContext(newctx=char) #not sure on this one yet
+                       ) 
+            return result
+                       
 if __name__=='__main__':
     import pdb; pdb.set_trace()
