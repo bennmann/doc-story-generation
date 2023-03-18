@@ -45,6 +45,7 @@ class RWKVSummarizer(AbstractSummarizer):
             logit_bias = {}
 
         outputs = []
+        rwkv_model = RWKV("/media/ubuntu/Download/RWKV-4-Pile-14B-20230313-ctx8192-test1050.pth",strategy="cuda fp16i8") #change model here
         for i in range(len(texts)):
             text = texts[i]
             prompt = text
@@ -56,7 +57,7 @@ class RWKVSummarizer(AbstractSummarizer):
                     context_length = len(self.tokenizer.encode(prompt))
                     if context_length > self.args.max_context_length:
                         logging.warning('context length' + ' ' + str(context_length) + ' ' + 'exceeded artificial context length limit' + ' ' + str(self.args.max_context_length))
-                        time.sleep(5) # similar interface to rwkv query failing and retrying
+                        time.sleep(5) # similar interface to GPT rwkv query failing and retrying
                         assert False
                     if max_tokens is None:
                         max_tokens = min(self.args.max_tokens, self.args.max_context_length - context_length)
@@ -66,20 +67,12 @@ class RWKVSummarizer(AbstractSummarizer):
                     logging.log(21, 'PROMPT')
                     logging.log(21, prompt)
                     logging.log(21, 'MODEL STRING:' + ' ' + self.model if model_string is None else model_string)
-                    completion = model.forward(prompt = prompt #openai.Completion.create(
-                        #engine=engine,
-                        #prompt=prompt,
-                        strategy="cuda fp16i8"
-                        suffix=suffixes[i] if suffixes is not None else None,
-                        max_tokens=max_tokens,
-                        temperature=temperature if temperature is not None else self.args.summarizer_temperature,
-                        top_p=top_p if top_p is not None else self.args.summarizer_top_p,
-                        frequency_penalty=self.args.summarizer_frequency_penalty,
-                        presence_penalty=self.args.summarizer_presence_penalty,
-                        stop=stop,
-                        )
-                        #logit_bias=logit_bias,
-                        #n=num_completions)
+                    TEMPERATURE=1.0 #completion = model.forward(prompt = prompt #openai.Completion.create(
+                    top_p = 0.8
+                    prompt=prompt
+                    suffix=suffixes[i] if suffixes is not None else None,
+                    rwkv_model.loadContext(ctx=input + instruction,newctx=context)
+                    completion = rwkv_model.forward(prompt + suffix)["output"])
                     retry = False
                 except Exception as e:
                     logging.warning(str(e))
@@ -95,7 +88,7 @@ class RWKVSummarizer(AbstractSummarizer):
             for i in range(len(outputs)):
                 if len(outputs[i].strip()) > 0:
                     outputs[i] = cut_last_sentence(outputs[i])
-        engine = self.model if model_string is None else model_string
+        engine = self.rwkv_model if model_string is None else model_string
         logging.log(21, 'OUTPUTS')
         logging.log(21, str(outputs))
         logging.log(21, 'RWKV CALL' + ' ' + engine + ' ' + str(len(self.tokenizer.encode(texts[0])) + sum([len(self.tokenizer.encode(o)) for o in outputs])))
