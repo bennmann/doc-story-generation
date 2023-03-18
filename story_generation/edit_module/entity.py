@@ -122,7 +122,7 @@ def infer_is_group(name, passage, gpt3_model, model_string, plural=False, thresh
             top_p = 0.8
             input=text if prefix is None else prefix.strip() + ' ' + text
             rwkv_model.loadContext(ctx=query)
-            completion = rwkv_model.forward(number=2)["output"])
+            completion = rwkv_model.forward(number=2)["output"]
             #completion = openai.Completion.create(
             #                    engine=model_string,
             #                    prompt=query,
