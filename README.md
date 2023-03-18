@@ -58,7 +58,8 @@ After generating a plan according to the previous instructions, we can generate 
 Our main story generation uses OPT-175B served using Alpa (https://alpa.ai/), since it allows token-level logit modification to run controlled generation approaches such as DOC's detailed controller as described in the paper. 
 You have a few options here. 
 
-#### 1. Free Public Alpa OPT-175B API (easy to get started; high quality, may be slower)
+3 methods may be broken for this repo
+~~#### 1. Free Public Alpa OPT-175B API (easy to get started; high quality, may be slower)
 
 You can ask the Alpa folks for a key to call their free public API at https://opt.alpa.ai/ (slack link at the bottom). They're really nice. 
 This option may be slower (in runtime) depending on your physical location, since their servers are in the Middle East.
@@ -83,7 +84,7 @@ Just use GPT3-175B instead, which means turning off our detailed controller. You
 
 To do this, set `--extension-method gpt3` in the main story command below. 
 
-It's not too expensive as far as the GPT3 API is concerned; you'll probably spend less than a dollar over the course of the story. 
+It's not too expensive as far as the GPT3 API is concerned; you'll probably spend less than a dollar over the course of the story. ~~
 
 #### 4. RWKV RNN LLM 14B model locally, like on bare metal
 --rwkv_model flag - work in progress
