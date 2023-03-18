@@ -15,7 +15,8 @@ from scipy.special import softmax
 from story_generation.common.util import *
 from story_generation.common.data.split_paragraphs import split_paragraphs
 from story_generation.rewrite_module.heuristics import *
-
+from rwkvstic.load import RWKV
+import gc
 
 ENTITY_MODEL_STRING = 'text-curie-001'
 STRONGER_ENTITY_MODEL_STRING = 'text-davinci-002'
@@ -72,24 +73,30 @@ def construct_infobox_prompt(current_sentence, current_name, other_names, num_ex
 
 
 def infer_is_character(name, passage, gpt3_model, model_string, plural=False, threshold=CHARACTER_THRESHOLD, return_logprobs=False):
+    rwkv_model = RWKV("/media/ubuntu/Download/RWKV-4-Pile-7B-20230109-ctx4096.pth", strategy="cuda fp16i8") #replace model with one downloaded from BlinkDL github
     answers = []
     all_logprobs = []
     for other in ['a place', 'an object', 'an event']:
         query = passage.strip() + '\n\n' + 'In this passage, is {} a character{}, as opposed to {}? Yes or no.\n\n'.format(name, ' or group of characters' if plural else '', other)
         retry = True
-        logging.log(21, 'GPT3 CALL' + ' ' + model_string + ' ' + str(len(gpt3_model.tokenizer.encode(query)) + 1))
+        logging.log(21, 'GPT3 or RWKV CALL' + ' ' + model_string + ' ' + str(len(gpt3_model.tokenizer.encode(query)) + 1))
         while retry:
             try:
-                completion = openai.Completion.create(
-                                    engine=model_string,
-                                    prompt=query,
-                                    max_tokens=1,
-                                    temperature=1,
-                                    top_p=1,
-                                    frequency_penalty=0.5,
-                                    presence_penalty=0,
-                                    logit_bias={3363: 50, 1400: 50}, # ' Yes' and ' No' for GPT3
-                                    logprobs=2)
+                TEMPERATURE=1.0
+                top_p = 0.8
+                input=text if prefix is None else prefix.strip() + ' ' + text
+                rwkv_model.loadContext(ctx=query)
+                completion = rwkv_model.forward(number=2)["output"])                             
+                #completion = openai.Completion.create(
+                             #       engine=model_string,
+                             #       prompt=query,
+                             #       max_tokens=1,
+                             #       temperature=1,
+                             #       top_p=1,
+                             #       frequency_penalty=0.5,
+                             #       presence_penalty=0,
+                             #       logit_bias={3363: 50, 1400: 50}, # ' Yes' and ' No' for GPT3
+                             #       logprobs=2)
                 retry = False
             except Exception as e: 
                 logging.log(23, str(e))
@@ -111,16 +118,21 @@ def infer_is_group(name, passage, gpt3_model, model_string, plural=False, thresh
     logging.log(21, 'GPT3 CALL' + ' ' + model_string + ' ' + str(len(gpt3_model.tokenizer.encode(query)) + 1))
     while retry:
         try:
-            completion = openai.Completion.create(
-                                engine=model_string,
-                                prompt=query,
-                                max_tokens=1,
-                                temperature=1,
-                                top_p=1,
-                                frequency_penalty=0.5,
-                                presence_penalty=0,
-                                logit_bias={1448: 50, 2060: 50}, # ' group' and ' single' for GPT3
-                                logprobs=2)
+            TEMPERATURE=1.0
+            top_p = 0.8
+            input=text if prefix is None else prefix.strip() + ' ' + text
+            rwkv_model.loadContext(ctx=query)
+            completion = rwkv_model.forward(number=2)["output"])
+            #completion = openai.Completion.create(
+            #                    engine=model_string,
+            #                    prompt=query,
+            #                    max_tokens=1,
+            #                    temperature=1,
+            #                    top_p=1,
+            #                    frequency_penalty=0.5,
+            #                    presence_penalty=0,
+            #                    logit_bias={1448: 50, 2060: 50}, # ' group' and ' single' for GPT3
+            #                    logprobs=2)
             retry = False
         except Exception as e: 
             logging.log(23, str(e))
