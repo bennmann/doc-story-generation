@@ -25,7 +25,7 @@ class RWKVSummarizer(AbstractSummarizer):
 
     @torch.no_grad()
     def __call__(self, texts, suffixes=None, max_tokens=None, top_p=None, temperature=None, retry_until_success=True, stop=None, logit_bias=None, num_completions=1, cut_sentence=False, model_string=None):
-         assert type(texts) == list
+        assert type(texts) == list
         if logit_bias is None:
             logit_bias = {}
         if suffixes is not None:
