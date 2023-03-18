@@ -482,7 +482,7 @@ def gpt3_insert(prefix, suffix, top_p=1, temperature=1, max_tokens=256, frequenc
             input=text if prefix is None else prefix.strip() + ' ' + text
             instruction=instruction
             rwkv_model.loadContext(ctx=prompt + suffix,newctx=context)
-            completion = rwkv_model.forward(number=num_completions)["output"])
+            completion = rwkv_model.forward(number=max_tokens)["output"])
             #completion = openai.Completion.create(
             #    engine="text-davinci-002",
             #    prompt=prefix,
