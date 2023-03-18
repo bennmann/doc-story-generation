@@ -22,7 +22,7 @@ def add_summarizer_args(parser):
     parser.add_argument('--alpa-url', type=str, default=None, help='url for alpa API')
     parser.add_argument('--alpa-port', type=str, default=None, help='port for alpa API, if alpa-url is a filename to read server location from. convenient for slurm')
     parser.add_argument('--alpa-key', type=str, default='', help='key for alpa API, if using the public API')
-    parser.add_argument('--rwkv_model', type=str, default='rwkv_summarizer', help='On Premise/local model architecture based on RNN language model (search online for RWKV)'
+    parser.add_argument('--rwkv_model', type=str, default='rwkv_summarizer', help='On Premise/local model architecture based on RNN language model (search online for RWKV)')
     return parser
 
 def load_summarizer(args):
