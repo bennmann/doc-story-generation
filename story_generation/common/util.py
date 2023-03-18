@@ -27,8 +27,10 @@ import signal
 from flair.data import Sentence
 from flair.models import SequenceTagger
 from rwkvstic.load import RWKV
+import gc
 
 from story_generation.common.data.split_paragraphs import *
+os.environ["RWKV_JIT_ON"] = '1'
 
 class TimeoutException(Exception): pass
 
@@ -46,15 +48,15 @@ def time_limit(seconds):
 sentence_encoder = None
 dpr_query_encoder = None
 dpr_context_encoder = None
-entailment_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
-entailment_tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
-ner_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
-qa_model =  AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
-qa_tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
-coreference_model = AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
-gpt_tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
+entailment_model =  None #AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
+entailment_tokenizer = None #AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
+ner_model =  None #AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
+qa_model =  None #AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
+qa_tokenizer = None #AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
+coreference_model = None #AutoModelForCausalLM.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b", load_in_8bit=True, device_map="auto") #None #default is None
+gpt_tokenizer = None #AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b") #None #default is None
 outline_order_controller = None
-tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b")
+#tokenizer = AutoTokenizer.from_pretrained("OpenAssistant/oasst-sft-1-pythia-12b")
 
 def add_general_args(parser):
     #parser.add_argument('--batch-size', type=int, default=128, help='batch size') #default
@@ -372,16 +374,22 @@ def gpt3_edit(text, instruction, prefix=None, filter_append=True, temperature=0.
                 logging.log(23, 'Warning: gpt3 edit failed to make a change after', max_retries, 'attempts')
                 return text
             try:
-                with time_limit(30):
-                    completion = openai.Edit.create(
-                                        engine='text-davinci-edit-001',
-                                        input=text if prefix is None else prefix.strip() + ' ' + text,
-                                        instruction=instruction,
-                                        temperature=temperature,
-                                        top_p=top_p,
-                                        n=num_completions,
-                                        **kwargs
-                    )
+                with time_limit(300): #consider adding if input else gpt below for rwkv vs gpt
+                    TEMPERATURE=1.0
+                    rwkv_model = RWKV("/media/ubuntu/Download/RWKV-4-Pile-7B-20230109-ctx4096.pth",strategy="cuda fp16i8") #change model here
+                    top_p = 0.8
+                    input=text if prefix is None else prefix.strip() + ' ' + text
+                    instruction=instruction
+                    rwkv_model.loadContext(ctx=input + instruction,newctx=context)                    
+                    completion = rwkv_model.forward(number=num_completions)["output"])# place your model directory above #openai.Edit.create( #replace with local model code
+                                 #       engine='text-davinci-edit-001',
+                                 #       input=text if prefix is None else prefix.strip() + ' ' + text,
+                                 #       instruction=instruction,
+                                 #       temperature=temperature,
+                                 #       top_p=top_p,
+                                 #       n=num_completions,
+                                 #       **kwargs
+                    #)
                 if all(['text' in completion['choices'][i] for i in range(num_completions)]):
                     retry = False
                 else:
@@ -390,9 +398,9 @@ def gpt3_edit(text, instruction, prefix=None, filter_append=True, temperature=0.
                 logging.log(23, str(e))
                 time.sleep(0.2)
                 logging.log(23, 'retrying...')
-        tokenizer = load_gpt_tokenizer()
+        tokenizer = load_gpt_tokenizer() #may need to update tokenizer
         outputs = [completion['choices'][i]['text'] for i in range(num_completions)]
-        logging.log(21, 'GPT3 CALL'  + ' ' + 'text-davinci-edit-001' + ' ' + str(len(tokenizer.encode(text if prefix is None else prefix.strip() + ' ' + text)) + sum([len(tokenizer.encode(o)) for o in outputs])))
+        logging.log(21, 'GPT3 CALL or RWKV'  + ' ' + 'text-davinci-edit-001 or RWKV' + ' ' + str(len(tokenizer.encode(text if prefix is None else prefix.strip() + ' ' + text)) + sum([len(tokenizer.encode(o)) for o in outputs])))
         edited_texts = []
         for i in range(num_completions):
             edited_text = completion['choices'][i]['text']
@@ -468,17 +476,24 @@ def gpt3_insert(prefix, suffix, top_p=1, temperature=1, max_tokens=256, frequenc
     retry = True
     while retry:
         try:
-            completion = openai.Completion.create(
-                engine="text-davinci-002",
-                prompt=prefix,
-                suffix=suffix,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                top_p=top_p,
-                frequency_penalty=frequency_penalty,
-                presence_penalty=presence_penalty,
-                **kwargs
-            )
+            TEMPERATURE=1.0
+            rwkv_model = RWKV("/media/ubuntu/Download/RWKV-4-Pile-7B-20230109-ctx4096.pth",strategy="cuda fp16i8") #change model here
+            top_p = 0.8
+            input=text if prefix is None else prefix.strip() + ' ' + text
+            instruction=instruction
+            rwkv_model.loadContext(ctx=prompt + suffix,newctx=context)
+            completion = rwkv_model.forward(number=num_completions)["output"])
+            #completion = openai.Completion.create(
+            #    engine="text-davinci-002",
+            #    prompt=prefix,
+            #    suffix=suffix,
+            #    temperature=temperature,
+            #    max_tokens=max_tokens,
+            #    top_p=top_p,
+            #    frequency_penalty=frequency_penalty,
+            #    presence_penalty=presence_penalty,
+            #    **kwargs
+            #)
             retry = False
         except Exception as e: 
             logging.log(23, e)
@@ -959,12 +974,12 @@ class AlpaOPTClient(object):
 #major changes below
 class rwkvLocalClient(object):
 
-    def __init__(self, rwkv_model=rwkv_model#self,
+    def __init__(self, default_model: str = "default") -> None: #self,
                  #url: Optional[str] = None,
                  #api_key: Optional[str] = None,
                 ) 
 
-        self.rwkv_model = RWKV("/media/ubuntu/Patience/BLOOMAI_UBUNTU/RWKV-4-Pile-14B-20230313-ctx8192-test1050.pth", strategy="cuda fp16i8" #and many others documented in ChatRWKV github)
+        self.rwkv_model = RWKV("/media/ubuntu/Download/RWKV-4-Pile-7B-20230109-ctx4096.pth", strategy="cuda fp16i8" #and many others documented in BlinkDL github)
 
 
     def completions(
