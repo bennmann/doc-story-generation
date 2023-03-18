@@ -72,7 +72,7 @@ class RWKVSummarizer(AbstractSummarizer):
                     prompt=prompt
                     suffix=suffixes[i] if suffixes is not None else None,
                     rwkv_model.loadContext(ctx=input + instruction,newctx=context)
-                    completion = rwkv_model.forward(prompt + suffix)["output"])
+                    completion = rwkv_model.forward(prompt + suffix)["output"]
                     retry = False
                 except Exception as e:
                     logging.warning(str(e))
