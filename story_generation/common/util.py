@@ -1028,7 +1028,7 @@ class rwkvLocalClient(object):
             pload["cache_id"] = cache_id
         result = rwkv_model.loadContext(ctx="\n\n", newctx=prompt_context
                        #pipeline = PIPELINE(model, f"{current_path}/20B_tokenizer.json") # not sure if necessary
-                       char = rwkv_model.forward(["output"]
+                       char = rwkv_model.forward(["logits"]
                        print(char, end='', flush=True)
                        #model.loadContext(newctx=char) #not sure on this one yet
                        ) 
